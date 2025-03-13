@@ -395,7 +395,7 @@ class ProdukTerlaris extends Public_Controller {
                         sum(data.total) as total,
                         count(j.kode_faktur) as jml_transaksi
                     from jual j
-                    left join
+                    right join
                         (
                             select 
                                 jl.kode_faktur_utama as kode_faktur,
@@ -406,7 +406,7 @@ class ProdukTerlaris extends Public_Controller {
                                 sum(ji.jumlah) as qty,
                                 sum(ji.total) as total
                             from jual_item ji
-                            right join
+                            left join
                                 (
                                     select 
                                         j.kode_faktur as kode_faktur,
@@ -499,7 +499,7 @@ class ProdukTerlaris extends Public_Controller {
                     data.member asc,
                     data.qty desc
             ";
-            cetak_r( $sql, 1 );
+            // cetak_r( $sql, 1 );
             $d_pi = $m_pi->hydrateRaw( $sql );
 
             if ( $d_pi->count() > 0 ) {
