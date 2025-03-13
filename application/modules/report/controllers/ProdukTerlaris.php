@@ -146,7 +146,7 @@ class ProdukTerlaris extends Public_Controller {
                         ) jl
                         on
                             ji.faktur_kode = jl.kode_faktur
-                    right join
+                    left join
                         menu m
                         on
                             ji.menu_kode = m.kode_menu
@@ -154,7 +154,7 @@ class ProdukTerlaris extends Public_Controller {
                         kategori_menu km
                         on
                             m.kategori_menu_id = km.id
-                    right join
+                    left join
                         jenis_menu jm
                         on
                             m.jenis_menu_id = jm.id
@@ -178,6 +178,7 @@ class ProdukTerlaris extends Public_Controller {
                 $sql_member = "and j.kode_member is not null and j.kode_member <> ''";
             }
 
+            /*
             $sql = "
                 select 
                     data.*,
@@ -374,6 +375,136 @@ class ProdukTerlaris extends Public_Controller {
                     jl.jumlah
                 order by
                     jl.jumlah desc,
+                    data.member asc,
+                    data.qty desc
+            ";
+            */
+            $sql = "
+                select 
+                    data.*,
+                    count(j.kode_faktur) as jml_transaksi
+                from
+                (
+                    select
+                        rtrim(ltrim(REPLACE(REPLACE(j.member, CHAR(13), ''), CHAR(10), ''))) as member,
+                        isnull(j.kode_member, '') as kode_member,
+                        data.menu_kode,
+                        data.menu_nama,
+                        data.kategori,
+                        data.jenis,
+                        sum(data.qty) as qty,
+                        sum(data.total) as total
+                    from jual j
+                    right join
+                        (
+                            select 
+                                jl.kode_faktur_utama as kode_faktur,
+                                ji.menu_kode,
+                                ji.menu_nama,
+                                km.nama as kategori,
+                                jm.nama as jenis,
+                                sum(ji.jumlah) as qty,
+                                sum(ji.total) as total
+                            from jual_item ji
+                            right join
+                                (
+                                    select 
+                                        j.kode_faktur as kode_faktur,
+                                        j.kode_faktur as kode_faktur_utama,
+                                        j.tgl_trans
+                                    from jual j 
+                                    where 
+                                        j.tgl_trans between '".$start_date."' and '".$end_date."' and
+                                        j.mstatus = 1
+                                        ".$sql_branch."
+                                    group by
+                                        j.kode_faktur,
+                                        j.tgl_trans
+
+                                    UNION ALL
+
+                                    select 
+                                        jg.faktur_kode_gabungan as kode_faktur,
+                                        jg.faktur_kode as kode_faktur_utama,
+                                        j.tgl_trans
+                                    from jual_gabungan jg
+                                    right join
+                                        (
+                                            select 
+                                                j.kode_faktur as kode_faktur,
+                                                j.tgl_trans
+                                            from jual j 
+                                            where 
+                                                j.tgl_trans between '".$start_date."' and '".$end_date."' and
+                                                j.mstatus = 1
+                                                ".$sql_branch."
+                                            group by
+                                                j.kode_faktur,
+                                                j.tgl_trans
+                                        ) j
+                                        on
+                                            j.kode_faktur = jg.faktur_kode
+                                    left join
+                                        jual j1
+                                        on
+                                            j1.kode_faktur = jg.faktur_kode_gabungan
+                                    where
+                                        jg.faktur_kode_gabungan is not null and
+                                        jg.faktur_kode is not null
+                                    group by
+                                        jg.faktur_kode_gabungan,
+                                        jg.faktur_kode,
+                                        j.tgl_trans
+                                ) jl
+                                on
+                                    ji.faktur_kode = jl.kode_faktur
+                            left join
+                                menu m
+                                on
+                                    ji.menu_kode = m.kode_menu
+                            left join
+                                kategori_menu km
+                                on
+                                    m.kategori_menu_id = km.id
+                            left join
+                                jenis_menu jm
+                                on
+                                    m.jenis_menu_id = jm.id
+                            where
+			                    jl.kode_faktur_utama is not null
+                            group by
+                                jl.kode_faktur_utama,
+                                ji.menu_kode,
+                                ji.menu_nama,
+                                km.nama,
+                                jm.nama
+                        ) data
+                        on
+                            data.kode_faktur = j.kode_faktur
+                    where
+                        data.kode_faktur is not null
+                        ".$sql_member."
+                    group by
+                        j.member,
+                        isnull(j.kode_member, ''),
+                        data.menu_kode,
+                        data.menu_nama,
+                        data.kategori,
+                        data.jenis
+                ) data
+                where
+                    data.member is not null and data.member <> ''
+                group by
+                    data.member,
+                    data.kode_member,
+                    data.menu_kode,
+                    data.menu_nama,
+                    data.kategori,
+                    data.jenis,
+                    data.qty,
+                    data.total
+                order by
+                    count(j.kode_faktur) desc,
                     data.member asc,
                     data.qty desc
             ";
