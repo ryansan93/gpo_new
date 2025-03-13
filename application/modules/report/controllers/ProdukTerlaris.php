@@ -381,8 +381,7 @@ class ProdukTerlaris extends Public_Controller {
             */
             $sql = "
                 select 
-                    data.*,
-                    count(j.kode_faktur) as jml_transaksi
+                    data.*
                 from
                 (
                     select
@@ -393,9 +392,10 @@ class ProdukTerlaris extends Public_Controller {
                         data.kategori,
                         data.jenis,
                         sum(data.qty) as qty,
-                        sum(data.total) as total
+                        sum(data.total) as total,
+                        count(j.kode_faktur) as jml_transaksi
                     from jual j
-                    right join
+                    left join
                         (
                             select 
                                 jl.kode_faktur_utama as kode_faktur,
@@ -494,21 +494,12 @@ class ProdukTerlaris extends Public_Controller {
                 ) data
                 where
                     data.member is not null and data.member <> ''
-                group by
-                    data.member,
-                    data.kode_member,
-                    data.menu_kode,
-                    data.menu_nama,
-                    data.kategori,
-                    data.jenis,
-                    data.qty,
-                    data.total
                 order by
-                    count(j.kode_faktur) desc,
+                    data.jml_transaksi desc,
                     data.member asc,
                     data.qty desc
             ";
-            cetak_r( $sql, 1 );
+            // cetak_r( $sql, 1 );
             $d_pi = $m_pi->hydrateRaw( $sql );
 
             if ( $d_pi->count() > 0 ) {
