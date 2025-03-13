@@ -377,7 +377,7 @@ class ProdukTerlaris extends Public_Controller {
                     data.member asc,
                     data.qty desc
             ";
-            cetak_r( $sql, 1 );
+            // cetak_r( $sql, 1 );
             $d_pi = $m_pi->hydrateRaw( $sql );
 
             if ( $d_pi->count() > 0 ) {
